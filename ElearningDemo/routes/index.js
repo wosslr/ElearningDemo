@@ -1,3 +1,4 @@
+
 exports.index = function(req, res){
   res.render('index', { title: 'Express' });
 };
@@ -16,3 +17,15 @@ exports.loginpost = function(req, res){
 	    }
 	    res.redirect('/login');
 };
+
+exports.home = function( req, res ){
+	var user={
+	        username:'admin',
+	        password:'123456'
+	    }
+	res.render('home', { title: 'Home', user: user });
+}
+
+exports.logout = function(req, res){
+	res.redirect('/');
+}
