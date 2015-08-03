@@ -2,7 +2,16 @@
  * Module dependencies.
  */
 
-var express = require('express'), routes = require('./routes/index'), users = require('./routes/user'), http = require('http'), path = require('path');
+var express = require('express'), 
+    routes = require('./routes/index'), 
+    users = require('./routes/user'), 
+    http = require('http'), 
+    path = require('path');
+
+var session = require('express-session');  
+var Settings = require('./database/settings');  
+var MongoStore = require('connect-mongodb');  
+var db = require('./database/msession');
 
 var app = express();
 
@@ -18,6 +27,21 @@ app.use(express.bodyParser());
 app.use(express.methodOverride());
 app.use(app.router);
 app.use(express.static(path.join(__dirname, 'public')));
+
+//session配置
+app.use(session({
+    cookie: { maxAge: 600000 },
+    secret: Settings.COOKIE_SECRET,
+    store: new MongoStore({  
+        username: Settings.USERNAME,
+        password: Settings.PASSWORD,
+        url: Settings.URL,
+        db: db})
+}))
+app.use(function(req, res, next){
+    res.locals.user = req.session.user;
+    next();
+});
 
 app.use('/', routes);
 app.use('/user', users); 
