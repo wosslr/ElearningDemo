@@ -2,15 +2,11 @@
  * Module dependencies.
  */
 
-var express = require('express'), 
-    routes = require('./routes/index'), 
-    users = require('./routes/user'), 
-    http = require('http'), 
-    path = require('path');
+var express = require('express'), routes = require('./routes/index'), users = require('./routes/user'), http = require('http'), path = require('path');
 
-var session = require('express-session');  
-var Settings = require('./database/settings');  
-var MongoStore = require('connect-mongodb');  
+var session = require('express-session');
+var Settings = require('./database/settings');
+var MongoStore = require('connect-mongodb');
 var db = require('./database/msession');
 
 var app = express();
@@ -25,29 +21,33 @@ app.use(express.favicon());
 app.use(express.logger('dev'));
 app.use(express.bodyParser());
 app.use(express.methodOverride());
-app.use(app.router);
-app.use(express.static(path.join(__dirname, 'public')));
 
-//session配置
+// session配置
 app.use(session({
-    cookie: { maxAge: 600000 },
-    secret: Settings.COOKIE_SECRET,
-    store: new MongoStore({  
-        username: Settings.USERNAME,
-        password: Settings.PASSWORD,
-        url: Settings.URL,
-        db: db})
+	cookie : {
+		maxAge : 600000
+	},
+	secret : Settings.COOKIE_SECRET,
+	store : new MongoStore({
+		username : Settings.USERNAME,
+		password : Settings.PASSWORD,
+		url : Settings.URL,
+		db : db
+	})
 }))
-app.use(function(req, res, next){
-    res.locals.user = req.session.user;
-    next();
+app.use(function(req, res, next) {
+	res.locals.user = req.session.user;
+	var err = req.session.error;
+	delete req.session.error;
+	res.locals.message = '';
+	if (err)
+		res.locals.message = '<div class="alert alert-warning">' + err
+				+ '</div>';
+	next();
 });
 
-app.use('/', routes);
-app.use('/user', users); 
-app.use('/login', routes.login);
-app.use('/logout', routes.logout);
-app.use('/home', routes.home);
+app.use(app.router);
+app.use(express.static(path.join(__dirname, 'public')));
 
 // development only
 if ('development' == app.get('env')) {
@@ -55,9 +55,30 @@ if ('development' == app.get('env')) {
 }
 
 app.get('/', routes.index);
+app.all('/login', notAuthentication);
 app.get('/users', users.list);
 app.post('/login', routes.loginpost);
+app.get('/login', routes.login);
+app.get('/logout', authentication);
+app.get('/logout', routes.logout);
+app.get('/home', authentication);
+app.get('/home', routes.home);
 
 http.createServer(app).listen(app.get('port'), function() {
 	console.log('Express server listening on port ' + app.get('port'));
 });
+
+function authentication(req, res, next) {
+	if (!req.session.user) {
+		req.session.error = '请先登录';
+		return res.redirect('/login');
+	}
+	next();
+}
+function notAuthentication(req, res, next) {
+	if (req.session.user) {
+		req.session.error = '已登录';
+		return res.redirect('/');
+	}
+	next();
+}

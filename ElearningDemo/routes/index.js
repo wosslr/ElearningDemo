@@ -18,15 +18,14 @@ exports.loginpost = function(req, res) {
 	if (req.body.username === user.username
 			&& req.body.password === user.password) {
 		try {
-			req.session = {};
-			req.session.user = user;
-			console.log(req.session.user);
+			req.session.user=user;
 			res.redirect('/home');
 		} catch (err) {
 			console.log(err);
 			res.redirect('/home');
 		}
 	} else {
+		req.session.error='用户名或密码不正确';
 		res.redirect('/login');
 	}
 };
