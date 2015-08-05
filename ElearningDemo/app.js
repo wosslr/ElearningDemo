@@ -37,7 +37,7 @@ app.use(express.logger('dev'));
 app.use(express.bodyParser());
 app.use(express.methodOverride());
 app.use(express.cookieParser());
-app.use(express.session());
+app.use(express.session({ secret: 'keyboard cat' }));
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -126,7 +126,6 @@ http.createServer(app).listen(app.get('port'), function() {
 });
 
 function authentication(req, res, next) {
-	console.log(req.session);
 	if (!req.session.passport.user) {
 		req.session.error = '请先登录';
 		return res.redirect('/login');
@@ -147,7 +146,8 @@ passport.serializeUser(function(user, done) {
 });
 
 passport.deserializeUser(function(id, done) {
-	User.findById(id, function(err, user) {
+	UserDetails.findById(id, function(err, user) {
+		console.log('findById' + user);
 		done(err, user);
 	});
 });

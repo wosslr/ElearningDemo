@@ -1,12 +1,14 @@
 
 
 exports.index = function(req, res) {
+	authentication_index(req, res);
 	res.render('index', {
 		title : 'Express'
 	});
 };
 
 exports.login = function(req, res) {
+	authentication_index(req, res);
 	res.render('login', {
 		title : 'Express'
 	});
@@ -34,10 +36,7 @@ exports.loginpost = function(req, res) {
 
 exports.home = function(req, res) {
 	authentication(req, res);
-	var user = {
-		username : 'admin',
-		password : '123456'
-	}
+	var user = req.user;
 	res.render('home', {
 		title : 'Home',
 		user : user
@@ -46,13 +45,18 @@ exports.home = function(req, res) {
 
 exports.logout = function(req, res) {
 	req.session.user = null;
+	req.logout();
 	res.redirect('/');
 }
 
 function authentication(req, res) {
-	if (!req.session.user) {
-		console.log("Auto check failed");
-		console.log(req.session.user);
+	if (!req.session.passport.user) {
 		return res.redirect('/login');
+	}
+}
+
+function authentication_index(req, res) {
+	if (req.session.passport.user) {
+		return res.redirect('/home');
 	}
 }
